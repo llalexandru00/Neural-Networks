@@ -21,12 +21,12 @@ def reshaped_result(result):
     return ar
 
 
-def process(data, proc_weights, proc_bias, result, update, rate=False):
+def process(data, proc_weights, proc_bias, result, rate=None):
     proc_data = np.asmatrix(data)
     proc_result = reshaped_result(result)
     z = np.dot(proc_weights, np.transpose(proc_data)) + proc_bias
     output = activate(z)
-    if update:
+    if rate is not None:
         proc_weights += np.dot(proc_result - output, proc_data) * rate
         proc_bias += (proc_result - output) * rate
     return np.array_equal(output, proc_result)
@@ -44,18 +44,17 @@ def train(train_weights, train_bias, learning_rate):
     while not all_classified and nr_iterations > 0:
         all_classified = True
         for i in range(0, data_size):
-            if not process(train_set[0][i], train_weights, train_bias, train_set[1][i], True, rate=learning_rate):
+            if not process(train_set[0][i], train_weights, train_bias, train_set[1][i], rate=learning_rate):
                 all_classified = False
         nr_iterations -= 1
-        if nr_iterations % 100 == 0:
-            print(nr_iterations)
+        print(nr_iterations)
 
 
 def check_set(checked_weights, checked_bias, data_set):
     hit = 0
     data_size = len(data_set[0])
     for i in range(0, data_size):
-        if process(data_set[0][i], checked_weights, checked_bias, data_set[1][i], False):
+        if process(data_set[0][i], checked_weights, checked_bias, data_set[1][i]):
             hit += 1
 
     return hit / data_size
@@ -75,7 +74,7 @@ f = gzip.open('mnist.pkl.gz', 'rb')
 train_set, valid_set, test_set = pickle.load(f, encoding="latin1")
 f.close()
 
-learning_rate_pool = [0.1, 0.3]
+learning_rate_pool = [0.1]
 maxim = -1
 best_weights = []
 best_bias = []
@@ -102,3 +101,7 @@ for lr in learning_rate_pool:
 
 print("Best validation score: " + str(maxim) + " (learning rate = " + str(best_lr) + ")")
 print("Testing score: " + str(test(best_weights, best_bias)))
+
+# Validation score with learning rate = 0.1: 0.8974
+# Best validation score: 0.8974 (learning rate = 0.1)
+# Testing score: 0.8933
